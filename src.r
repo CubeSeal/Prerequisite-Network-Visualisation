@@ -21,9 +21,10 @@ unsw_courses.df <- read.csv("unsw-courses.csv", na.strings = "null",
 # DF of prereq links and faculty
 named_edges <- unsw_courses.df %>%
     na.omit() %>%
-    mutate(destination = str_extract(courses, "[A-Z]{4}[0-9]{4}")) %>%
-    mutate(prereqs = str_extract_all(conditions, "[A-Z]{4}[0-9]{4}")) %>%
+    mutate(destination = str_extract(courses, "[A-Z]{4}\\d{4}(?!\\d)")) %>%
+    mutate(prereqs = str_extract_all(conditions, "[A-Z]{4}\\d{4}(?!\\d)")) %>%
     unnest(prereqs) %>%
+    distinct() %>%
     select(source = prereqs, destination, faculties)
 
 # igraph DF of nodes (id, label and faculty)
@@ -45,7 +46,7 @@ edges <- named_edges %>%
 routes <- tbl_graph(nodes = nodes, edges = edges, directed = T)
 
 # Plot the routes data
-ggraph(routes, layout = "sugiyama", hgap = 4) +
+ggraph(routes, layout = "sugiyama", hgap = 4, maxiter = 10000) +
     geom_edge_diagonal(alpha = 0.1,
                        colour = 'white') +
     geom_node_point(size = 1.5, aes(colour = faculties)) +
